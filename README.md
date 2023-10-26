@@ -3,6 +3,7 @@
 Tools for quick install. Easy to use. Gonna have more updates soon.
 
 ## Usage
+Put *.py files into Server Directory.
  - ```python update.py``` Update your server Instantly.
 
 ## Note
