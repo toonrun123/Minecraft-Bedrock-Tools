@@ -11,6 +11,7 @@ This tool let you import addons / update server / install server by one command.
     Copy your worlds into backup folder.
 ## Getting Start
 ```
+ 0.pip install platform shutil datetime zipfile json io requests re wget
  1.clone this repos into your server directory
  2.copy patcher.py into your server directory
  3.run python|python3 update.py init
