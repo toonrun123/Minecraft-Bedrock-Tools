@@ -9,6 +9,7 @@ import requests
 import re
 import wget
 import platform
+import json_parser
 
 VERSION = "0.1.0a"
 
@@ -39,37 +40,67 @@ def WriteFile(file_path):
     with open(file_path, "w") as file:
         file.write('[]')
 
-def process_archive(archive, archive_path, filllist):
+bp_count = 0
+rp_count = 0
+
+
+def clean_json_string(json_str):
+    acceptable_chars = ''.join(c for c in json_str if c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789{}[]":,.;- ')
+    return acceptable_chars
+
+def process_archive(archive, archive_path, filllist,namemodinstalled,modname):
     for xd in archive.namelist():
-        if xd.endswith('.zip'):
+        if xd.endswith('.zip') or xd.endswith(".mcpack") or xd.endswith(".mcaddon"):
             nested_archive_data = archive.read(xd)
             nested_archive_path = os.path.join(archive_path, xd)
             nested_archive = zipfile.ZipFile(io.BytesIO(nested_archive_data), 'r')
-            process_archive(nested_archive, nested_archive_path, filllist)
+            process_archive(nested_archive, nested_archive_path, filllist,namemodinstalled,modname)
         elif xd.find("manifest.json") != -1:
-            raw = archive.read(xd).decode("utf-8")
-            raw = json.loads(raw, strict=False)
-            filetype = raw["modules"][0]["type"]
-            filllist.append({"UID": raw["header"]["uuid"], "VERSION": raw["header"]["version"], "TYPE": filetype})
-            direc = "/"
-            if filetype == "data":
-                direc = "/behavior_packs"
-            else:
-                direc = "/resource_packs"
-            
-            archive_name = os.path.splitext(os.path.basename(archive_path))[0]
-            output_directory = os.path.join(MyPath + direc, archive_name)
-            os.makedirs(output_directory, exist_ok=True)
-            splspl = xd.split("/")
-            newpath = ""
-            for i in splspl:
-                if i == splspl[-1]:
+            try:
+                if xd.find("__MACOSX") == 0:
+                    print(f'Ignore __MACOSX {modname}')
                     continue
-                newpath = newpath + i
-            parent_dir = os.path.dirname(xd)
-            for yes in archive.namelist():
-                archive.extract(xd,output_directory)
-            #archive.extractall(member=parent_dir, path=output_directory)
+                raw = clean_json_string(archive.read(xd).decode("utf_8"))
+                raw = json.loads(raw)
+                filetype = raw["modules"][0]["type"]
+                filllist.append({"UID": raw["header"]["uuid"], "VERSION": raw["header"]["version"], "TYPE": filetype})
+                direc = "/"
+                custom_header = ""
+                if filetype == "data" or filetype == "scripts":
+                    direc = "/behavior_packs"
+                    custom_header = "BP"
+                else:
+                    direc = "/resource_packs"
+                    custom_header = "RP"
+                
+                archive_name = os.path.splitext(os.path.basename(archive_path))[0]
+                output_directory = MyPath + direc
+                splspl = xd.split("/")
+                newpath = ""
+                for i in splspl:
+                    if i == splspl[-1]:
+                        continue
+                    newpath = newpath + i
+                parent_dir = os.path.dirname(xd)
+                dircheck = xd.split("/")[0]+"/"
+                fileheader = ""
+                ignore_file = False
+                if dircheck == "manifest.json/":
+                    fileheader = archive_path.split("/")[-1].split(".")[0]
+                    output_directory = output_directory + "/" + fileheader + custom_header
+                    ignore_file = True
+                for yes in archive.infolist():
+                    if yes.filename.startswith(dircheck) or ignore_file == True:
+                        archive.extract(yes,output_directory)
+                if namemodinstalled.get(modname) != None:
+                    continue
+                namemodinstalled[modname] = True
+                #archive.extractall(member=parent_dir, path=output_directory)
+            except Exception as s:
+                print(f"Failed Import {modname} :: {s}")
+                if namemodinstalled.get(modname) != list:
+                    namemodinstalled[modname] = []
+                namemodinstalled[modname].append(s)
 
 def printworldlist():
     for i in os.listdir(MyPath+"/worlds/"):
@@ -122,6 +153,7 @@ def Update():
             print("Minecraft Bedrock Website not found version string!")
 
 if command == "update":
+    print("Updating Minecraft Bedrock Server...")
     Update()
 elif command == "backup-worlds":
     if not os.path.exists(backup_directory) and not os.path.isdir(backup_directory):
@@ -138,8 +170,6 @@ elif command == "backup-worlds":
         print(f"[ERROR] :: {e}")
 elif command == "addons-import":
     WorldName = arguments[0]
-    if WorldName == None:
-        print("yes")
     WorldDIR = MyPath+"/worlds/"+WorldName
     behpath = WorldDIR + "/world_behavior_packs.json"
     repath = WorldDIR + "/world_resource_packs.json"
@@ -153,14 +183,25 @@ elif command == "addons-import":
     if not os.path.exists(repath):
         WriteFile(repath)
     target = []
+    namemodinstalled = {}
     for Mod in Mods:
-        print(f'Installing {Mod}')
+        print(f"Importing {Mod}")
         with zipfile.ZipFile(f'{MyPath}/BPL/Addons/{Mod}', 'r') as archive:
-            process_archive(archive, f'{MyPath}/BPL/Addons/{Mod}',target)
+            process_archive(archive, f'{MyPath}/BPL/Addons/{Mod}',target,namemodinstalled,Mod)
     bejsonlinker = []
     rejsonlinker = []
+    print("Imported Addons List:")
+    for i,v in namemodinstalled.items():
+        if v == True:
+            print("     "+i)
+    print("Failed Imported Addons List:")
+    for i,v in namemodinstalled.items():
+        if v != True:
+            print("     "+i)
+            for err in v:
+                print(f"           {err}")
     with open(behpath) as json_file:
-        datel = json.load(json_file)
+        datel = json.load(json_file,strict=False)
         for i in target:
             exist = False
             for x in datel:
@@ -171,7 +212,7 @@ elif command == "addons-import":
             if i["TYPE"] != "data": continue 
             bejsonlinker.append({"pack_id": i["UID"],"version": i["VERSION"]})
     with open(repath) as json_file:
-        datel = json.load(json_file)
+        datel = json.load(json_file,strict=False)
         for i in target:
             exist = False
             for x in datel:
