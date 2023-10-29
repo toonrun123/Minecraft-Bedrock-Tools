@@ -11,7 +11,7 @@ import wget
 import platform
 import json_parser
 
-VERSION = "0.1.0a"
+VERSION = "0.2.0a"
 
 def PrintUsage():
     print(f'Minecraft Bedrock Patcher {VERSION}')
@@ -22,10 +22,11 @@ def PrintUsage():
     print(f'    init                         // Init required files for patcher (Always run before use another command!)')
     print(f'    install                      // Install Minecraft Bedrock Server')
     print(f'    update                       // Update Bedrock Server to Lastest Version.')
+    print(f'    start                        // Start Minecraft Server.')
+    print(f'    world-import                 // Import World from BPL/Worlds.')
     print(f'    addons-import [WorldName]    // Import Addons from BPL/Addons.')
     print(f'    worldslist                   // Get Worlds List')
     print(f'    backup-worlds                // Backup World Server.')
-
 if len(sys.argv) < 2:
     PrintUsage()
     sys.exit(1)
@@ -42,7 +43,6 @@ def WriteFile(file_path):
 
 bp_count = 0
 rp_count = 0
-
 
 def clean_json_string(json_str):
     acceptable_chars = ''.join(c for c in json_str if c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789{}[]":,.;- ')
@@ -126,7 +126,7 @@ def Update():
             print(f'Release Bedrock Server Version: {version} ({os_name})')
             print("Downloading Release Minecraft Bedrock Server...")
             binlink = ""
-            if os_name == "Linux":
+            if os_name == "Linux" or os_name == "Darwin":
                 binlink = "bin-linux"
             elif os_name == "Windows":
                 binlink = "bin-win"
@@ -169,6 +169,9 @@ elif command == "backup-worlds":
     except Exception as e:
         print(f"[ERROR] :: {e}")
 elif command == "addons-import":
+    if len(arguments) <= 0:
+        print("Error Arguements.")
+        PrintUsage()
     WorldName = arguments[0]
     WorldDIR = MyPath+"/worlds/"+WorldName
     behpath = WorldDIR + "/world_behavior_packs.json"
@@ -232,6 +235,8 @@ elif command == "init":
         os.mkdir(MyPath+"/BPL")
     if not os.path.exists(MyPath+"/BPL/Addons"):
         os.mkdir(MyPath+"/BPL/Addons")
+    if not os.path.exists(MyPath+"/BPL/Worlds"):
+        os.mkdir(MyPath+"/BPL/Worlds")
     print("Init!")
     sys.exit()
 elif command == "worldslist":
@@ -240,5 +245,34 @@ elif command == "worldslist":
 elif command == "install":
     print("Installing Minecraft Bedrock Server...")
     Update()
+elif command == "start":
+    if os_name == "Linux":
+        os.system("chmod +x bedrock_server")
+        os.system('LD_LIBRARY_PATH=. ./bedrock_server')
+    elif os_name == "Windows":
+        os.system("bedrock_server.exe")
+    elif os_name == "Darwin":
+        print("i dont know how to")
+elif command == "world-import":
+    WorldsList = os.listdir(f'{MyPath}/BPL/Worlds')
+    if len(WorldsList) <= 0:
+        print("Worlds List not found, Please add any *.mcworld into BPL/Worlds!")
+    print(f'What world do you want to import?')
+    c = 1
+    for i in WorldsList:
+        goodstring = clean_json_string(i.split('.mcworld')[0])
+        print(f"       {c}. {goodstring}")
+        c+=1
+    result = int(input(f"Choose Between 1-{c-1} or 0 for Cancel: "))
+    if result == 0:
+        print("Operation Cancelled.")
+        sys.exit()
+    with zipfile.ZipFile(f'{MyPath}/BPL/Worlds/{WorldsList[result-1]}', 'r') as archive:
+        strfilted = clean_json_string(WorldsList[result-1].split('.mcworld')[0])
+        opfolder = MyPath+"/worlds/"+strfilted
+        if not os.path.exists(opfolder):
+            os.mkdir(opfolder)
+        archive.extractall(opfolder)
+        print(f'Imported {strfilted}\n     - Edit server.properties level-name to "{strfilted}" to apply world.')
 else:
     print("Unknown Command.")
