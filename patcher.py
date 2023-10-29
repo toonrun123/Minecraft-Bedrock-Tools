@@ -9,9 +9,8 @@ import requests
 import re
 import wget
 import platform
-import json_parser
 
-VERSION = "0.2.1a"
+VERSION = "0.2.2a"
 
 def PrintUsage():
     print(f'Minecraft Bedrock Patcher {VERSION}')
