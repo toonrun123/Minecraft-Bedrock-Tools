@@ -3,6 +3,8 @@
 This tool let you import addons / update server / install server by one command.
 
 ## Features
+ #### Quick Start Server
+    Only one command!
  #### Quick Import Addons
     Install addons with one command (Please look Install Addons Topic for details.)
  #### Update/Install
@@ -21,6 +23,8 @@ This tool let you import addons / update server / install server by one command.
     init                         // Init required files for patcher (Always run before use another command!)
     install                      // Install Minecraft Bedrock Server
     update                       // Update Bedrock Server to Lastest Version.
+    start                        // Start Minecraft Server.
+    world-import                 // Import World from BPL/Worlds.
     addons-import [WorldName]    // Import Addons from BPL/Addons.
     worldslist                   // Get Worlds List
     backup-worlds                // Backup World Server.
