@@ -9,15 +9,24 @@ import requests
 import re
 import wget
 import platform
+import subprocess
 
-VERSION = "0.2.2a"
+def is_node_installed():
+    try:
+        subprocess.check_output(["npm", "-v"])
+        subprocess.check_output(["node", "-v"])
+        return True
+    except FileNotFoundError:
+        return False
+
+VERSION = "0.3.0a"
 
 def PrintUsage():
     print(f'Minecraft Bedrock Patcher {VERSION}')
     print(f'Supported: Linux, Windows (untested)')
     print(f'https://github.com/toonrun123/Minecraft-Bedrock-Tools\n')
     print(f'Start Command: python|python3 patcher.py [COMMAND] [ARGS]')
-    print(f'  Example Usage: python3 patcher.py addons-import "Bedrock Level"')
+    print(f'  Example Usage: python3 patcher.py import "Bedrock Level"')
     print(f'    init                         // Init required files for patcher (Always run before use another command!)')
     print(f'    install                      // Install Minecraft Bedrock Server')
     print(f'    update                       // Update Bedrock Server to Lastest Version.')
@@ -27,6 +36,7 @@ def PrintUsage():
     print(f'    worldslist                   // Get Worlds List')
     print(f'    backup-worlds                // Backup World Server.')
     print(f'    script-update                // Update Script to Lastest Version.')
+    print(f'    patch-level-dat [WorldName]   // Patch Level.dat file to Enable Experiments Mode. (Required Nodejs,Npm)')
 if len(sys.argv) < 2:
     PrintUsage()
     sys.exit(1)
@@ -170,8 +180,9 @@ elif command == "backup-worlds":
         print(f"[ERROR] :: {e}")
 elif command == "addons-import":
     if len(arguments) <= 0:
-        print("Error Arguements.")
+        print("[ERROR] :: Error Arguements.")
         PrintUsage()
+        sys.exit()
     WorldName = arguments[0]
     WorldDIR = MyPath+"/worlds/"+WorldName
     behpath = WorldDIR + "/world_behavior_packs.json"
@@ -237,6 +248,32 @@ elif command == "init":
         os.mkdir(MyPath+"/BPL/Addons")
     if not os.path.exists(MyPath+"/BPL/Worlds"):
         os.mkdir(MyPath+"/BPL/Worlds")
+    if not os.path.exists(MyPath+"/BPL/internal"):
+        os.mkdir(MyPath+"/BPL/internal")
+    if not os.path.exists(MyPath+"/BPL/internal/node_modules"):
+        os.mkdir(MyPath+"/BPL/internal/node_modules")
+    with open(MyPath+"/BPL/internal/edit.mjs", "w") as file:
+        file.write("""import { readFile } from "node:fs/promises";
+import * as NBT from "nbtify";
+import { writeFile } from "node:fs/promises";
+
+const arg = process.argv[2];
+const buffer = await readFile(arg);
+const data = await NBT.read(buffer);
+const yeah = {
+    cameras: true,
+    data_driven_biomes: true,
+    data_driven_items: true,
+    experimental_molang_features: true,
+    experiments_ever_used: true,
+    gametest: true,
+    saved_with_toggled_experiments: true,
+    upcoming_creator_features: true
+}
+data["data"]["experiments"] = yeah
+const result = await NBT.write(data);
+await writeFile(arg,result);
+""")
     print("Init!")
     sys.exit()
 elif command == "worldslist":
@@ -257,6 +294,7 @@ elif command == "world-import":
     WorldsList = os.listdir(f'{MyPath}/BPL/Worlds')
     if len(WorldsList) <= 0:
         print("Worlds List not found, Please add any *.mcworld into BPL/Worlds!")
+        sys.exit()
     print(f'What world do you want to import?')
     c = 1
     for i in WorldsList:
@@ -280,5 +318,27 @@ elif command == "script-update":
         with open(__file__, 'w') as file:
             file.write(r.text)
         print("Updated!")
+elif command == "patch-level-dat":
+    if len(arguments) <= 0:
+        print("[ERROR] :: Error Arguements.")
+        PrintUsage()
+        sys.exit()
+    WorldName = arguments[0]
+    lvdat = MyPath+"/worlds/"+WorldName+"/level.dat"
+    if not is_node_installed():
+        print("[WARN] :: Please Install Nodejs && npm in your system.")
+        sys.exit()
+    else:
+        print("Installing requirements...")
+        nodepath = MyPath+"/BPL/internal/node_modules" 
+        scriptpath = MyPath+"/BPL/internal/edit.mjs" 
+        csls = ['npm','install','-g','--prefix',nodepath, 'nbtify']
+        result = subprocess.run(csls, cwd=MyPath+"/BPL/internal", stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        if result.returncode == 0:
+            print("Installed nbtify!")
+        pormise = ['node',scriptpath,lvdat]
+        jsondump = subprocess.run(pormise, cwd=MyPath+"/BPL/internal", stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        print("Patched level.dat to Experiments Mode.")
+        
 else:
     print("Unknown Command.")
