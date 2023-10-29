@@ -11,7 +11,7 @@ import wget
 import platform
 import json_parser
 
-VERSION = "0.2.0a"
+VERSION = "0.2.1a"
 
 def PrintUsage():
     print(f'Minecraft Bedrock Patcher {VERSION}')
@@ -27,6 +27,7 @@ def PrintUsage():
     print(f'    addons-import [WorldName]    // Import Addons from BPL/Addons.')
     print(f'    worldslist                   // Get Worlds List')
     print(f'    backup-worlds                // Backup World Server.')
+    print(f'    script-update                // Update Script to Lastest Version.')
 if len(sys.argv) < 2:
     PrintUsage()
     sys.exit(1)
@@ -274,5 +275,11 @@ elif command == "world-import":
             os.mkdir(opfolder)
         archive.extractall(opfolder)
         print(f'Imported {strfilted}\n     - Edit server.properties level-name to "{strfilted}" to apply world.')
+elif command == "script-update":
+    with requests.Session() as session:
+        (r := session.get('https://raw.githubusercontent.com/toonrun123/Minecraft-Bedrock-Tools/main/patcher.py', headers=headers)).raise_for_status()
+        with open(__file__, 'w') as file:
+            file.write(r.text)
+        print("Updated!")
 else:
     print("Unknown Command.")
