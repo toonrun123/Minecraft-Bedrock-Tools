@@ -17,7 +17,7 @@ def PrintUsage():
     print(f'Supported: Linux, Windows (untested)')
     print(f'https://github.com/toonrun123/Minecraft-Bedrock-Tools\n')
     print(f'Start Command: python|python3 patcher.py [COMMAND] [ARGS]')
-    print(f'  Example Usage: python3 patcher.py import "Bedrock Level"')
+    print(f'  Example Usage: python3 patcher.py addons-import "Bedrock Level"')
     print(f'    init                         // Init required files for patcher (Always run before use another command!)')
     print(f'    install                      // Install Minecraft Bedrock Server')
     print(f'    update                       // Update Bedrock Server to Lastest Version.')
