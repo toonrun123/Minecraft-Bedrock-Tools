@@ -19,7 +19,7 @@ def is_node_installed():
     except FileNotFoundError:
         return False
 
-VERSION = "0.3.0a"
+VERSION = "0.3.1a"
 
 def PrintUsage():
     print(f'Minecraft Bedrock Patcher {VERSION}')
@@ -55,7 +55,7 @@ bp_count = 0
 rp_count = 0
 
 def clean_json_string(json_str):
-    acceptable_chars = ''.join(c for c in json_str if c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789{}[]":,.;- ')
+    acceptable_chars = ''.join(c for c in json_str if c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789{}[]":,.;-/\n')
     return acceptable_chars
 
 def process_archive(archive, archive_path, filllist,namemodinstalled,modname):
@@ -70,7 +70,8 @@ def process_archive(archive, archive_path, filllist,namemodinstalled,modname):
                 if xd.find("__MACOSX") == 0:
                     print(f'Ignore __MACOSX {modname}')
                     continue
-                raw = clean_json_string(archive.read(xd).decode("utf_8"))
+                raw = clean_json_string(archive.read(xd).decode("utf-8"))
+                raw = re.sub(r'(/\*([^*]|[\r\n]|(\*+([^*/]|[\r\n])))*\*+/)|(//.*)', '', raw)
                 raw = json.loads(raw)
                 filetype = raw["modules"][0]["type"]
                 filllist.append({"UID": raw["header"]["uuid"], "VERSION": raw["header"]["version"], "TYPE": filetype})
