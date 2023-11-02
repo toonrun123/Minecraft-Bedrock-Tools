@@ -13,6 +13,7 @@ This tool let you import addons / update server / install server by one command.
     Copy your worlds into backup folder.
 ## Getting Start
 ```
+-1.install nodejs, npm (reqired for patch-level-dat command)
  0.pip install datetime requests wget
  1.clone this repos into your server directory
  2.copy patcher.py into your server directory
@@ -28,6 +29,8 @@ This tool let you import addons / update server / install server by one command.
     addons-import [WorldName]    // Import Addons from BPL/Addons.
     worldslist                   // Get Worlds List
     backup-worlds                // Backup World Server.
+    script-update                // Update Script to Lastest Version.
+    patch-level-dat [WorldName]   // Patch Level.dat file to Enable Experiments Mode. (Required Nodejs,Npm)
 ```
 ## Install Addons
 ```
@@ -46,6 +49,7 @@ This tool let you import addons / update server / install server by one command.
 
  How do i set to Experiment Mode (2 ways)
     1.(Recommend) Import level.dat from Pre-settings World.
+    1.5.(Standard) using patch-level-dat command.
     2.(Not Recommend) (Backup World Recommend) Patching level.dat by using offroaders123.github.io/Dovetail Website.
     find experiments then edit like this (1.20.40.01)
         {
