@@ -19,7 +19,7 @@ def is_node_installed():
     except FileNotFoundError:
         return False
 
-VERSION = "0.3.1a"
+VERSION = "0.3.2a"
 
 def PrintUsage():
     print(f'Minecraft Bedrock Patcher {VERSION}')
@@ -254,26 +254,32 @@ elif command == "init":
     if not os.path.exists(MyPath+"/BPL/internal/node_modules"):
         os.mkdir(MyPath+"/BPL/internal/node_modules")
     with open(MyPath+"/BPL/internal/edit.mjs", "w") as file:
-        file.write("""import { readFile } from "node:fs/promises";
+        file.write("""import { readFile, writeFile } from "node:fs/promises";
 import * as NBT from "nbtify";
-import { writeFile } from "node:fs/promises";
 
 const arg = process.argv[2];
-const buffer = await readFile(arg);
-const data = await NBT.read(buffer);
-const yeah = {
-    cameras: true,
-    data_driven_biomes: true,
-    data_driven_items: true,
-    experimental_molang_features: true,
-    experiments_ever_used: true,
-    gametest: true,
-    saved_with_toggled_experiments: true,
-    upcoming_creator_features: true
+
+async function modifyAndWriteNBTFile() {
+    const buffer = await readFile(arg);
+    const data = await NBT.read(buffer);
+    const yeah = {
+        cameras: true,
+        data_driven_biomes: true,
+        data_driven_items: true,
+        experimental_molang_features: true,
+        experiments_ever_used: true,
+        gametest: true,
+        saved_with_toggled_experiments: true,
+        upcoming_creator_features: true,
+    };
+    data.data.experiments = yeah;
+    const result = await NBT.write(data);
+    await writeFile(arg, result);
 }
-data["data"]["experiments"] = yeah
-const result = await NBT.write(data);
-await writeFile(arg,result);
+
+modifyAndWriteNBTFile().catch((error) => {
+    console.error("Error:", error);
+});
 """)
     print("Init!")
     sys.exit()
