@@ -19,7 +19,7 @@ def is_node_installed():
     except FileNotFoundError:
         return False
 
-VERSION = "0.3.3a"
+VERSION = "0.3.4a"
 
 def PrintUsage():
     print(f'Minecraft Bedrock Patcher {VERSION}')
@@ -254,12 +254,12 @@ elif command == "init":
     if not os.path.exists(MyPath+"/BPL/internal/node_modules"):
         os.mkdir(MyPath+"/BPL/internal/node_modules")
     with open(MyPath+"/BPL/internal/edit.mjs", "w") as file:
-        file.write("""import { readFile, writeFile } from "node:fs/promises";
+        file.write("""import { promises as fsPromises } from "fs";
 import * as NBT from "../internal/node_modules/lib/node_modules/nbtify/dist/index.js";
 const arg = process.argv[2];
 
 async function modifyAndWriteNBTFile() {
-    const buffer = await readFile(arg);
+    const buffer = await fsPromises.readFile(arg);
     const data = await NBT.read(buffer);
     const yeah = {
         cameras: true,
@@ -273,7 +273,7 @@ async function modifyAndWriteNBTFile() {
     };
     data.data.experiments = yeah;
     const result = await NBT.write(data);
-    await writeFile(arg, result);
+    await fsPromises.writeFile(arg, result);
 }
 
 modifyAndWriteNBTFile().catch((error) => {
