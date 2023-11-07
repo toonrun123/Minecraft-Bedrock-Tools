@@ -19,7 +19,7 @@ def is_node_installed():
     except FileNotFoundError:
         return False
 
-VERSION = "0.3.2a"
+VERSION = "0.3.3a"
 
 def PrintUsage():
     print(f'Minecraft Bedrock Patcher {VERSION}')
@@ -255,8 +255,7 @@ elif command == "init":
         os.mkdir(MyPath+"/BPL/internal/node_modules")
     with open(MyPath+"/BPL/internal/edit.mjs", "w") as file:
         file.write("""import { readFile, writeFile } from "node:fs/promises";
-import * as NBT from "nbtify";
-
+import * as NBT from "../internal/node_modules/lib/node_modules/nbtify/dist/index.js";
 const arg = process.argv[2];
 
 async function modifyAndWriteNBTFile() {
