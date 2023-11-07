@@ -337,9 +337,15 @@ elif command == "patch-level-dat":
         result = subprocess.run(csls, cwd=MyPath+"/BPL/internal", stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if result.returncode == 0:
             print("Installed nbtify!")
+        else:
+            print(jsondump.stderr)
         pormise = ['node',scriptpath,lvdat]
         jsondump = subprocess.run(pormise, cwd=MyPath+"/BPL/internal", stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        print("Patched level.dat to Experiments Mode.")
+        if jsondump.returncode == 0:
+            print("Patched level.dat to Experiments Mode.")
+        else:
+            print("Failure to patch level.dat!\n")
+            print(jsondump.stderr)
         
 else:
     print("Unknown Command.")
